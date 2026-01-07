@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import { libraries, Seat as SeatType, Floor } from '@/lib/data';
+import { libraries, Seat as SeatType, Floor, Library } from '@/lib/data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Armchair, Users, Info, X, Sun, Tv, Book, Coffee, DoorOpen, Clock } from 'lucide-react';
@@ -82,18 +82,19 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
   const [timeSlot, setTimeSlot] = useState<string>('');
   const { toast } = useToast();
   
-  const [libraryData, setLibraryData] = useState(() => libraries.find(lib => lib.id === libraryId));
+  const [libraryData, setLibraryData] = useState<Library | null>(null);
+  const [loading, setLoading] = useState(true);
+
 
   useEffect(() => {
-    const lib = libraries.find(l => l.id === libraryId);
-    if (lib) {
-      setLibraryData(lib);
+    if (libraryId) {
+      const lib = libraries.find(l => l.id === libraryId);
+      if (lib) {
+        setLibraryData(lib);
+      }
     }
+    setLoading(false);
   }, [libraryId]);
-
-  if (!libraryData) {
-    notFound();
-  }
 
   const handleSeatSelect = (seat: SeatType) => {
     if (seat.status === 'Available') {
@@ -120,13 +121,13 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
     // For this mock, we'll simulate the process and update local state.
     setTimeout(() => {
         setLibraryData(prevLibrary => {
-            if (!prevLibrary) return prevLibrary;
+            if (!prevLibrary) return null;
             
             const newFloors = prevLibrary.floors.map(floor => ({
                 ...floor,
                 seats: floor.seats.map(seat => 
                     seat.id === selectedSeat.id 
-                    ? { ...seat, status: 'Pending' } 
+                    ? { ...seat, status: 'Pending' as SeatType['status'] } 
                     : seat
                 )
             }));
@@ -151,8 +152,12 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
       .join(', ');
   }, [libraryData]);
 
+  if (loading) {
+    return <div className="container py-8">Loading library...</div>;
+  }
+  
   if (!libraryData) {
-    return <div>Loading library...</div>;
+    notFound();
   }
 
   return (

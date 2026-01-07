@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries } from '@/lib/data';
+import { libraries, Library } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,28 +15,25 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
   const router = useRouter();
   const { toast } = useToast();
   const { id: libraryId } = params;
-  const [library, setLibrary] = useState<typeof libraries[0] | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const initialLibrary = libraries.find(l => l.id === libraryId);
-    if (initialLibrary) {
-      setLibrary({ ...initialLibrary });
-    }
-    setLoading(false);
-  }, [libraryId]);
+  const [library, setLibrary] = useState<Library | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [libraryName, setLibraryName] = useState('');
   const [libraryAddress, setLibraryAddress] = useState('');
 
   useEffect(() => {
-    if (library) {
-      setLibraryName(library.name);
-      setLibraryAddress(library.address);
+    if (libraryId) {
+        const initialLibrary = libraries.find(l => l.id === libraryId);
+        if (initialLibrary) {
+          setLibrary({ ...initialLibrary });
+          setLibraryName(initialLibrary.name);
+          setLibraryAddress(initialLibrary.address);
+        }
     }
-  }, [library]);
-
-
+    setLoading(false);
+  }, [libraryId]);
+  
   const handleSaveChanges = () => {
     if (!library) return;
     // In a real app, this would save to Firestore
