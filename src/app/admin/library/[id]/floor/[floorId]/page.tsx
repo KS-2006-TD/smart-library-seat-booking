@@ -3,13 +3,85 @@
 
 import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries, Seat, Floor } from '@/lib/data';
+import { libraries, Seat, Floor, TableGroup, OtherElement as OtherElementType } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import EditorPalette, { BrushType } from '@/components/admin/editor-palette';
+
+// Re-usable components from the booking page to render the flexible layout
+function Chair({ seat, onClick }: { seat: Seat, onClick: (id: string) => void }) {
+  return (
+    <div
+      onClick={() => onClick(seat.id)}
+      style={{
+        transform: `rotate(${seat.rotation || 0}deg) translate(38px) rotate(-${seat.rotation || 0}deg)`,
+      }}
+      className={cn(
+        'absolute top-1/2 left-1/2 -mt-3 -ml-3 h-6 w-6 rounded-md transition-all duration-200 bg-green-200 text-green-800 cursor-pointer hover:scale-110 hover:ring-2 ring-primary'
+      )}
+      aria-label={`Seat ${seat.label}`}
+    >
+       <div style={{ transform: `rotate(${-(seat.rotation || 0)}deg)` }} className="w-full h-full flex items-center justify-center text-[8px] font-bold">
+        {seat.label}
+       </div>
+    </div>
+  );
+}
+
+function Table({ table, onElementClick }: { table: TableGroup, onElementClick: (type: string, id: string) => void }) {
+  return (
+    <div
+      className="relative group"
+      style={{
+        position: 'absolute',
+        left: `${table.position.x}%`,
+        top: `${table.position.y}%`,
+        width: '120px',
+        height: '120px',
+      }}
+    >
+      <div 
+        onClick={() => onElementClick('table', table.id)}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-md cursor-pointer group-hover:ring-2 ring-primary"
+      >
+        <span className="text-xs font-semibold text-gray-600">{table.label}</span>
+      </div>
+      {table.seats.map(seat => (
+        <Chair
+          key={seat.id}
+          seat={seat}
+          onClick={(id) => onElementClick('seat', id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OtherElement({ element, onElementClick }: { element: OtherElementType, onElementClick: (type: string, id: string) => void }) {
+  const typeStyles = {
+    storage: 'bg-gray-200 border-gray-300 text-gray-600',
+    reception: 'bg-gray-200 border-gray-300 text-gray-600',
+    stack: 'bg-teal-400/80 border-teal-500 text-white',
+  }
+  return (
+    <div
+      onClick={() => onElementClick(element.type, element.id)}
+      style={{
+        position: 'absolute',
+        left: `${element.position.x}%`,
+        top: `${element.position.y}%`,
+        width: `${element.size.w}px`,
+        height: `${element.size.h}px`,
+      }}
+      className={cn("flex items-center justify-center rounded-md border-2 cursor-pointer hover:ring-2 ring-primary", typeStyles[element.type])}
+    >
+       <span className="text-xs font-bold tracking-wide">{element.label}</span>
+    </div>
+  );
+}
 
 function EditableSeat({ seat, onMouseDown, onMouseEnter }: { seat: Seat, onMouseDown: (seatId: string) => void, onMouseEnter: (seatId: string) => void }) {
   const seatTypeIcons: { [key in Seat['type']]: React.ReactNode } = {
@@ -78,7 +150,6 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
                 const wasSeat = oldType === 'seat' || oldType === 'group-seat';
                 const isSeat = newType === 'seat' || newType === 'group-seat';
                 
-                // Don't change label if we are erasing
                 if (newType === 'space') {
                     newLabel = '';
                 } else if (isSeat && !wasSeat) {
@@ -93,7 +164,6 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
             return s;
         });
 
-        // After changing types, we might need to re-label all seats to ensure they are sequential
         let currentSeatNumber = 1;
         const relabeledSeats = newSeats.map(s => {
             if(s.type === 'seat' || s.type === 'group-seat') {
@@ -103,9 +173,17 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
             return s;
         });
 
-
         return {...prevFloor, seats: relabeledSeats };
     });
+  }
+
+  const handleElementClick = (type: string, id: string) => {
+    // Placeholder for future editing functionality (e.g. drag, resize, property panel)
+    console.log(`Selected ${type} with ID: ${id}`);
+    toast({
+        title: "Element Selected",
+        description: `You clicked on a ${type} (ID: ${id}). Editing coming soon!`,
+    })
   }
 
   const handleMouseDown = (seatId: string) => {
@@ -139,6 +217,9 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
   if (!floorData) {
     notFound();
   }
+  
+  const isGridLayout = !!floorData.seats && !!floorData.gridSize;
+  const isFlexibleLayout = !!floorData.layout;
 
   return (
     <div className="flex h-screen bg-muted/40">
@@ -151,13 +232,15 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
          </div>
          <EditorPalette activeBrush={activeBrush} onBrushSelect={setActiveBrush} />
       </div>
-      <div className="flex-1 flex flex-col p-4 gap-4" onMouseUp={handleMouseUp}>
+      <div className="flex-1 flex flex-col p-4 gap-4" onMouseUp={isGridLayout ? handleMouseUp : undefined}>
         <div className="flex justify-between items-center bg-background p-3 rounded-lg shadow-sm">
             <div>
                 <h1 className="text-2xl font-bold font-headline ml-4 inline-block align-middle">
                     Editing: {floorData.name}
                 </h1>
-                <p className='text-sm text-muted-foreground ml-4'>Click and drag on the grid to draw your layout.</p>
+                <p className='text-sm text-muted-foreground ml-4'>
+                    {isGridLayout ? "Click and drag on the grid to draw your layout." : "Click on an element to select it. Drag & drop coming soon!"}
+                </p>
             </div>
             <Button onClick={handleSaveChanges}>
                 <Save className="mr-2 h-4 w-4" />
@@ -166,13 +249,13 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
         </div>
         <Card className="flex-1">
           <CardContent className="p-4 md:p-6 h-full overflow-auto">
-            {floorData.seats && floorData.gridSize ? (
+            {isGridLayout ? (
                 <div 
                   className="grid gap-1" 
-                  style={{gridTemplateColumns: `repeat(${floorData.gridSize.cols}, minmax(0, 1fr))`}}
-                  onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves grid
+                  style={{gridTemplateColumns: `repeat(${floorData.gridSize!.cols}, minmax(0, 1fr))`}}
+                  onMouseLeave={handleMouseUp}
                 >
-                  {floorData.seats.map(seat => (
+                  {floorData.seats!.map(seat => (
                     <EditableSeat 
                         key={seat.id} 
                         seat={seat}
@@ -181,9 +264,25 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
                     />
                   ))}
                 </div>
+            ) : isFlexibleLayout ? (
+                <div className="bg-slate-50/20 relative min-h-[600px] overflow-hidden">
+                    <div className="relative w-full h-[550px]">
+                        {floorData.layout!.zones?.map(zone => (
+                            <div key={zone.id} style={{ position: 'absolute', left: `${zone.position.x}%`, top: `${zone.position.y}%`}}>
+                                <h3 className="text-lg font-bold text-gray-700">{zone.label}</h3>
+                            </div>
+                        ))}
+                        {floorData.layout!.tables?.map(table => (
+                            <Table key={table.id} table={table} onElementClick={handleElementClick} />
+                        ))}
+                        {floorData.layout!.otherElements?.map(el => (
+                            <OtherElement key={el.id} element={el} onElementClick={handleElementClick} />
+                        ))}
+                    </div>
+                </div>
             ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                    This floor uses a flexible layout that cannot be edited with the grid editor.
+                    This floor does not have a configurable layout.
                 </div>
             )}
           </CardContent>
@@ -192,3 +291,5 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
     </div>
   );
 }
+
+    
