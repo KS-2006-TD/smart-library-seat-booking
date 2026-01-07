@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { libraries, Seat, Floor } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
@@ -29,7 +30,7 @@ function EditableSeat({ seat, onMouseDown, onMouseEnter }: { seat: Seat, onMouse
       className='aspect-square rounded-sm p-0.5 transition-all duration-150 relative flex items-center justify-center border-2 border-transparent hover:border-primary/50 cursor-crosshair'
       aria-label={`Grid cell ${seat.id}, Type: ${seat.type}`}
     >
-      {seatTypeIcons[seat.type]}
+      {seat.type !== 'space' ? seatTypeIcons[seat.type] : <div className="w-full h-full bg-gray-100/50" /> }
       {seat.label && <span className="absolute text-[7px] font-bold text-black/60 pointer-events-none">{seat.label}</span>}
     </div>
   );
@@ -38,7 +39,8 @@ function EditableSeat({ seat, onMouseDown, onMouseEnter }: { seat: Seat, onMouse
 export default function FloorEditorPage({ params }: { params: { id: string, floorId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { id: libraryId, floorId } = params;
+  const [libraryId, setLibraryId] = useState('');
+  const [floorId, setFloorId] = useState('');
 
   const [floorData, setFloorData] = useState<Floor | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,19 +48,24 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
   const [activeBrush, setActiveBrush] = useState<BrushType>('seat');
 
   useEffect(() => {
+    setLibraryId(params.id);
+    setFloorId(params.floorId);
+  }, [params.id, params.floorId]);
+
+  useEffect(() => {
     if (libraryId && floorId) {
         const lib = libraries.find(l => l.id === libraryId);
         const floor = lib?.floors.find(f => f.id === floorId) ?? null;
         setFloorData(floor);
+        setLoading(false);
     }
-    setLoading(false);
   }, [libraryId, floorId]);
   
   const updateSeat = (seatId: string) => {
     if (!activeBrush) return;
 
     setFloorData(prevFloor => {
-        if(!prevFloor) return null;
+        if(!prevFloor || !prevFloor.seats) return null;
         
         let seatCounter = prevFloor.seats.filter(s => s.type === 'seat' || s.type === 'group-seat').length;
 
@@ -70,8 +77,11 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
 
                 const wasSeat = oldType === 'seat' || oldType === 'group-seat';
                 const isSeat = newType === 'seat' || newType === 'group-seat';
-
-                if (isSeat && !wasSeat) {
+                
+                // Don't change label if we are erasing
+                if (newType === 'space') {
+                    newLabel = '';
+                } else if (isSeat && !wasSeat) {
                     seatCounter++;
                     newLabel = `${newType === 'seat' ? 'S' : 'G'}${seatCounter}`;
                 } else if (!isSeat && wasSeat) {
@@ -83,7 +93,18 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
             return s;
         });
 
-        return {...prevFloor, seats: newSeats };
+        // After changing types, we might need to re-label all seats to ensure they are sequential
+        let currentSeatNumber = 1;
+        const relabeledSeats = newSeats.map(s => {
+            if(s.type === 'seat' || s.type === 'group-seat') {
+                const prefix = s.type === 'seat' ? 'S' : 'G';
+                return {...s, label: `${prefix}${currentSeatNumber++}`};
+            }
+            return s;
+        });
+
+
+        return {...prevFloor, seats: relabeledSeats };
     });
   }
 
@@ -145,20 +166,26 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
         </div>
         <Card className="flex-1">
           <CardContent className="p-4 md:p-6 h-full overflow-auto">
-            <div 
-              className="grid gap-1" 
-              style={{gridTemplateColumns: `repeat(${floorData.gridSize.cols}, minmax(0, 1fr))`}}
-              onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves grid
-            >
-              {floorData.seats.map(seat => (
-                <EditableSeat 
-                    key={seat.id} 
-                    seat={seat}
-                    onMouseDown={handleMouseDown}
-                    onMouseEnter={handleMouseEnter}
-                />
-              ))}
-            </div>
+            {floorData.seats && floorData.gridSize ? (
+                <div 
+                  className="grid gap-1" 
+                  style={{gridTemplateColumns: `repeat(${floorData.gridSize.cols}, minmax(0, 1fr))`}}
+                  onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves grid
+                >
+                  {floorData.seats.map(seat => (
+                    <EditableSeat 
+                        key={seat.id} 
+                        seat={seat}
+                        onMouseDown={handleMouseDown}
+                        onMouseEnter={handleMouseEnter}
+                    />
+                  ))}
+                </div>
+            ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                    This floor uses a flexible layout that cannot be edited with the grid editor.
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>

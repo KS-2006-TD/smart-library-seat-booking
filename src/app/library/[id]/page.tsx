@@ -1,9 +1,9 @@
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import { libraries, Seat as SeatType, Floor, Library } from '@/lib/data';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { libraries, Seat as SeatType, Floor, Library, TableGroup } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Armchair, Users, Info, X, Sun, Tv, Book, Coffee, DoorOpen, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,68 +14,121 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 
-function Seat({ seat, onSeatClick, isSuggested }: { seat: SeatType, onSeatClick: (seat: SeatType) => void, isSuggested: boolean }) {
+function Chair({ seat, onSeatClick, isSelected, isSuggested }: { seat: SeatType, onSeatClick: (seat: SeatType) => void, isSelected: boolean, isSuggested: boolean }) {
   const seatStatusClasses = {
-    Available: 'bg-green-200 text-green-800 hover:bg-green-300 cursor-pointer',
+    Available: 'bg-teal-200 text-teal-800 hover:bg-teal-300 cursor-pointer',
     Occupied: 'bg-red-200 text-red-800 cursor-not-allowed',
-    Booked: 'bg-blue-200 text-blue-800 cursor-not-allowed',
+    Booked: 'bg-slate-300 text-slate-600 cursor-not-allowed',
     Pending: 'bg-yellow-200 text-yellow-800 cursor-not-allowed',
   };
 
-  const seatTypeIcons = {
-    seat: <Armchair className="w-full h-full p-0.5" />,
-    'group-seat': <Users className="w-full h-full p-0.5" />,
-    wall: <div className="w-full h-full bg-slate-300 rounded-sm" />,
-    window: <div className="w-full h-full bg-blue-100 flex items-center justify-center rounded-sm"><Sun className="w-4 h-4 text-blue-400"/></div>,
-    'book-shelf': <div className="w-full h-full bg-orange-100 flex items-center justify-center rounded-sm"><Book className="w-4 h-4 text-orange-400"/></div>,
-    'coffee-station': <div className="w-full h-full bg-yellow-100 flex items-center justify-center rounded-sm"><Coffee className="w-4 h-4 text-yellow-600"/></div>,
-    'entrance': <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-sm"><DoorOpen className="w-4 h-4 text-gray-600"/></div>,
-    space: <div />,
-  };
-  
-  const isInteractiveSeat = ['seat', 'group-seat'].includes(seat.type);
-
-  if (!isInteractiveSeat) {
-    return <div className="aspect-square flex items-center justify-center p-0.5">{seatTypeIcons[seat.type]}</div>;
-  }
+  const isInteractive = seat.status === 'Available';
 
   return (
-    <button
-      onClick={() => onSeatClick(seat)}
-      disabled={seat.status !== 'Available'}
+    <div
+      onClick={() => isInteractive && onSeatClick(seat)}
+      style={{
+        transform: `rotate(${seat.rotation || 0}deg) translate(38px) rotate(-${seat.rotation || 0}deg)`,
+      }}
       className={cn(
-        'aspect-square rounded-md p-0.5 transition-all duration-200 relative flex items-center justify-center',
+        'absolute top-1/2 left-1/2 -mt-3 -ml-3 h-6 w-6 rounded-md transition-all duration-200',
         seatStatusClasses[seat.status],
-        isSuggested && 'ring-2 ring-offset-2 ring-accent'
+        isInteractive && 'hover:scale-110',
+        isSelected && 'ring-2 ring-offset-2 ring-primary',
+        isSuggested && !isSelected && 'ring-2 ring-offset-1 ring-accent',
       )}
       aria-label={`Seat ${seat.label}, Status: ${seat.status}`}
     >
-      {seatTypeIcons[seat.type]}
-      <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-semibold text-foreground/80">{seat.label}</span>
-      {isSuggested && <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-accent animate-pulse" />}
-    </button>
+       {isSuggested && !isSelected && <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent animate-pulse" />}
+       <div style={{ transform: `rotate(${-(seat.rotation || 0)}deg)` }} className="w-full h-full flex items-center justify-center text-[8px] font-bold">
+        {/* You could add an icon here if you wanted */}
+       </div>
+    </div>
   );
 }
 
-function SeatMap({ floor, onSeatSelect, suggestedSeats }: { floor: Floor, onSeatSelect: (seat: SeatType) => void, suggestedSeats: string[] }) {
-  const gridCols = `grid-cols-${floor.gridSize.cols}`;
-  
+function Table({ table, onSeatClick, selectedSeat, suggestedSeats }: { table: TableGroup, onSeatClick: (seat: SeatType) => void, selectedSeat: SeatType | null, suggestedSeats: string[] }) {
   return (
-    <Card>
-      <CardContent className="p-4 md:p-6">
-        <div className={cn('grid gap-4', gridCols)} style={{gridTemplateColumns: `repeat(${floor.gridSize.cols}, minmax(0, 1fr))`}}>
-          {floor.seats.map(seat => (
-            <Seat key={seat.id} seat={seat} onSeatClick={onSeatSelect} isSuggested={suggestedSeats.includes(seat.label)} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div
+      className="relative"
+      style={{
+        position: 'absolute',
+        left: `${table.position.x}%`,
+        top: `${table.position.y}%`,
+        width: '120px',
+        height: '120px',
+      }}
+    >
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-md">
+        <span className="text-xs font-semibold text-gray-600">{table.label}</span>
+      </div>
+      {table.seats.map(seat => (
+        <Chair
+          key={seat.id}
+          seat={seat}
+          onSeatClick={onSeatClick}
+          isSelected={selectedSeat?.id === seat.id}
+          isSuggested={suggestedSeats.includes(seat.label)}
+        />
+      ))}
+    </div>
   );
 }
 
+function OtherElement({ element }: { element: { id: string, label: string, position: { x: number, y: number }, size: { w: number, h: number }, type: 'storage' | 'reception' | 'stack' } }) {
+  const typeStyles = {
+    storage: 'bg-gray-200 border-gray-300 text-gray-600',
+    reception: 'bg-gray-200 border-gray-300 text-gray-600',
+    stack: 'bg-teal-400/80 border-teal-500 text-white',
+  }
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: `${element.position.x}%`,
+        top: `${element.position.y}%`,
+        width: `${element.size.w}px`,
+        height: `${element.size.h}px`,
+      }}
+      className={cn("flex items-center justify-center rounded-md border-2", typeStyles[element.type])}
+    >
+       <span className="text-xs font-bold tracking-wide">{element.label}</span>
+    </div>
+  );
+}
+
+function SeatMap({ floor, onSeatSelect, selectedSeat, suggestedSeats }: { floor: Floor, onSeatSelect: (seat: SeatType) => void, selectedSeat: SeatType | null, suggestedSeats: string[] }) {
+    if (!floor.layout) return <p>This floor does not have a layout configured.</p>;
+
+    const { zones, tables, otherElements } = floor.layout;
+
+    return (
+      <Card className="bg-slate-50/20 relative min-h-[600px] overflow-hidden">
+        <CardContent className="p-4 md:p-6 h-full">
+            {/* Zones and Titles */}
+            {zones?.map(zone => (
+                 <div key={zone.id} style={{ position: 'absolute', left: `${zone.position.x}%`, top: `${zone.position.y}%`}}>
+                    <h3 className="text-lg font-bold text-gray-700">{zone.label}</h3>
+                 </div>
+            ))}
+           
+            {/* Main Content Area */}
+            <div className="relative w-full h-[550px]">
+                {tables?.map(table => (
+                    <Table key={table.id} table={table} onSeatClick={onSeatSelect} selectedSeat={selectedSeat} suggestedSeats={suggestedSeats} />
+                ))}
+                {otherElements?.map(el => (
+                    <OtherElement key={el.id} element={el} />
+                ))}
+            </div>
+
+        </CardContent>
+      </Card>
+    );
+}
 
 export default function LibraryPage({ params }: { params: { id: string } }) {
-  const { id: libraryId } = params;
+  const [libraryId, setLibraryId] = useState('');
   const [selectedSeat, setSelectedSeat] = useState<SeatType | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [suggestedSeats, setSuggestedSeats] = useState<string[]>([]);
@@ -84,6 +137,12 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
   
   const [libraryData, setLibraryData] = useState<Library | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isConfirming, setIsConfirming] = useState(false);
+
+
+  useEffect(() => {
+    setLibraryId(params.id);
+  }, [params.id]);
 
 
   useEffect(() => {
@@ -92,8 +151,8 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
       if (lib) {
         setLibraryData(lib);
       }
+      setLoading(false);
     }
-    setLoading(false);
   }, [libraryId]);
 
   const handleSeatSelect = (seat: SeatType) => {
@@ -102,6 +161,18 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
       setTimeSlot(''); // Reset time slot when new seat is selected
     }
   };
+  
+  const handleOpenConfirmDialog = () => {
+    if (!selectedSeat) {
+      toast({
+        variant: "destructive",
+        title: "No Seat Selected",
+        description: "Please click on an available seat to select it.",
+      });
+      return;
+    }
+    setIsConfirming(true);
+  }
 
   const handleBooking = () => {
     if (!selectedSeat || !timeSlot) {
@@ -117,24 +188,27 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
     
     console.log(`Booking request for seat ${selectedSeat.label} for ${timeSlot}`);
 
-    // In a real app, this would trigger a Firestore write.
-    // For this mock, we'll simulate the process and update local state.
     setTimeout(() => {
         setLibraryData(prevLibrary => {
             if (!prevLibrary) return null;
-            
-            const newFloors = prevLibrary.floors.map(floor => ({
-                ...floor,
-                seats: floor.seats.map(seat => 
-                    seat.id === selectedSeat.id 
-                    ? { ...seat, status: 'Pending' as SeatType['status'] } 
-                    : seat
-                )
-            }));
+
+            const newFloors = prevLibrary.floors.map(floor => {
+                if (!floor.layout?.tables) return floor;
+                const newTables = floor.layout.tables.map(table => ({
+                    ...table,
+                    seats: table.seats.map(seat => 
+                        seat.id === selectedSeat.id 
+                        ? { ...seat, status: 'Pending' as SeatType['status'] } 
+                        : seat
+                    )
+                }));
+                return { ...floor, layout: { ...floor.layout, tables: newTables }};
+            });
             return { ...prevLibrary, floors: newFloors };
         });
 
         setIsBooking(false);
+        setIsConfirming(false);
         setSelectedSeat(null);
         setTimeSlot('');
         toast({
@@ -146,8 +220,10 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
   
   const availableSeatsString = useMemo(() => {
     if (!libraryData) return '';
-    return libraryData.floors.flatMap(f => f.seats)
-      .filter(s => ['seat', 'group-seat'].includes(s.type) && s.status === 'Available')
+    return libraryData.floors
+      .flatMap(f => f.layout?.tables || [])
+      .flatMap(t => t.seats)
+      .filter(s => s.status === 'Available')
       .map(s => s.label)
       .join(', ');
   }, [libraryData]);
@@ -156,98 +232,80 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
     return <div className="container py-8">Loading library...</div>;
   }
   
-  if (!libraryData) {
+  if (!libraryData || !libraryData.floors.length) {
     notFound();
   }
+  
+  const currentFloor = libraryData.floors[0];
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold font-headline">{libraryData.name}</h1>
-        <p className="text-muted-foreground">{libraryData.address}</p>
-      </div>
+    <div className="bg-slate-50 min-h-screen">
+        <div className="container py-8">
+            <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold font-headline text-gray-800">{libraryData.name}</h1>
+                <p className="text-muted-foreground">{currentFloor.name}</p>
+            </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-            <Tabs defaultValue={libraryData.floors[0].id} className="w-full">
-            <TabsList className="grid w-full" style={{gridTemplateColumns: `repeat(${libraryData.floors.length}, 1fr)`}}>
-                {libraryData.floors.map(floor => (
-                    <TabsTrigger key={floor.id} value={floor.id}>{floor.name}</TabsTrigger>
-                ))}
-            </TabsList>
-            {libraryData.floors.map(floor => (
-                <TabsContent key={floor.id} value={floor.id}>
-                    <SeatMap floor={floor} onSeatSelect={handleSeatSelect} suggestedSeats={suggestedSeats} />
-                </TabsContent>
-            ))}
-            </Tabs>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Info className="w-5 h-5" /> Legend</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-green-200"></div> Available</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-200"></div> Occupied</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-blue-200"></div> Booked</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-yellow-200"></div> Pending</div>
-                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full ring-2 ring-accent"></div> Suggested</div>
-                <div className="flex items-center gap-2"><Armchair className="w-4 h-4" /> Single Seat</div>
-                <div className="flex items-center gap-2"><Users className="w-4 h-4" /> Group Seat</div>
-                <div className="flex items-center gap-2"><div className="p-2 rounded bg-blue-100"><Sun className="w-4 h-4 text-blue-400" /></div> Window</div>
-                <div className="flex items-center gap-2"><div className="p-2 rounded bg-orange-100"><Book className="w-4 h-4 text-orange-400" /></div> Shelf</div>
-            </CardContent>
-          </Card>
-          <SeatSuggestionForm 
-            availableSeats={availableSeatsString} 
-            onSuggestion={setSuggestedSeats} 
-          />
-        </div>
-      </div>
-      
-      <Dialog open={!!selectedSeat} onOpenChange={(open) => !open && setSelectedSeat(null)}>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Confirm Your Booking Request</DialogTitle>
-                <DialogDescription>
-                    You are requesting to book seat <span className="font-bold text-primary">{selectedSeat?.label}</span>. 
-                    Please select a time slot. Your request will be pending until an admin approves it.
-                </DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                    <p><strong>Library:</strong> {libraryData.name}</p>
-                    <p><strong>Floor:</strong> {libraryData.floors.find(f => f.seats.some(s => s.id === selectedSeat?.id))?.name}</p>
-                    <p><strong>Seat:</strong> {selectedSeat?.label}</p>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="time-slot" className="font-semibold">Time Slot</Label>
-                    <Select value={timeSlot} onValueChange={setTimeSlot}>
-                        <SelectTrigger id="time-slot">
-                            <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-muted-foreground" />
-                                <SelectValue placeholder="Select how long you want to book" />
-                            </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="1-hour">1 Hour</SelectItem>
-                            <SelectItem value="2-hours">2 Hours</SelectItem>
-                            <SelectItem value="4-hours">4 Hours</SelectItem>
-                            <SelectItem value="all-day">All Day</SelectItem>
-                        </SelectContent>
-                    </Select>
+            <SeatMap floor={currentFloor} onSeatSelect={handleSeatSelect} selectedSeat={selectedSeat} suggestedSeats={suggestedSeats} />
+            
+             <div className="fixed bottom-5 left-1/2 -translate-x-1/2 w-full max-w-sm z-50">
+                <div className="bg-white rounded-xl shadow-2xl p-3 flex items-center justify-between gap-4">
+                    <div className="font-semibold text-lg text-gray-700 flex-1 text-center">
+                        Seat: <span className={cn("text-primary font-bold", !selectedSeat && "text-gray-400")}>{selectedSeat?.label ?? 'None'}</span>
+                    </div>
+                    <Button 
+                        size="lg" 
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg flex-shrink-0"
+                        onClick={handleOpenConfirmDialog}
+                        disabled={!selectedSeat}
+                    >
+                        Confirm Reservation
+                    </Button>
                 </div>
             </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedSeat(null)} disabled={isBooking}>Cancel</Button>
-                <Button onClick={handleBooking} disabled={isBooking}>
-                    {isBooking ? 'Submitting Request...' : 'Confirm Request'}
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <Dialog open={isConfirming} onOpenChange={(open) => !open && setIsConfirming(false)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Confirm Your Booking Request</DialogTitle>
+                        <DialogDescription>
+                            You are requesting to book seat <span className="font-bold text-primary">{selectedSeat?.label}</span>. 
+                            Please select a time slot. Your request will be pending until an admin approves it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="space-y-2">
+                            <p><strong>Library:</strong> {libraryData.name}</p>
+                            <p><strong>Floor:</strong> {currentFloor.name}</p>
+                            <p><strong>Seat:</strong> {selectedSeat?.label}</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="time-slot" className="font-semibold">Time Slot</Label>
+                            <Select value={timeSlot} onValueChange={setTimeSlot}>
+                                <SelectTrigger id="time-slot">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                        <SelectValue placeholder="Select how long you want to book" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1-hour">1 Hour</SelectItem>
+                                    <SelectItem value="2-hours">2 Hours</SelectItem>
+                                    <SelectItem value="4-hours">4 Hours</SelectItem>
+                                    <SelectItem value="all-day">All Day</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConfirming(false)} disabled={isBooking}>Cancel</Button>
+                        <Button onClick={handleBooking} disabled={isBooking || !timeSlot}>
+                            {isBooking ? 'Submitting Request...' : 'Confirm Request'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
     </div>
   );
 }

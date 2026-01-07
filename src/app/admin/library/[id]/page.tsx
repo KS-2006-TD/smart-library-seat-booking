@@ -1,37 +1,42 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries, Library } from '@/lib/data';
+import { libraries, Library, Floor } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Edit } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditLibraryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { id: libraryId } = params;
+  const [libraryId, setLibraryId] = useState('');
 
   const [library, setLibrary] = useState<Library | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [libraryName, setLibraryName] = useState('');
   const [libraryAddress, setLibraryAddress] = useState('');
+  
+  useEffect(() => {
+    setLibraryId(params.id);
+  }, [params.id]);
 
   useEffect(() => {
     if (libraryId) {
-        const initialLibrary = libraries.find(l => l.id === libraryId);
-        if (initialLibrary) {
-          setLibrary({ ...initialLibrary });
-          setLibraryName(initialLibrary.name);
-          setLibraryAddress(initialLibrary.address);
-        }
+      const initialLibrary = libraries.find(l => l.id === libraryId);
+      if (initialLibrary) {
+        setLibrary({ ...initialLibrary });
+        setLibraryName(initialLibrary.name);
+        setLibraryAddress(initialLibrary.address);
+      }
+      setLoading(false);
     }
-    setLoading(false);
   }, [libraryId]);
   
   const handleSaveChanges = () => {
@@ -52,6 +57,16 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
         title: 'Feature Coming Soon',
         description: 'The ability to add new floors is under development.',
     });
+  }
+
+  const getSeatCount = (floor: Floor) => {
+    if (floor.layout?.tables) {
+        return floor.layout.tables.reduce((acc, table) => acc + table.seats.length, 0);
+    }
+    if (floor.seats) {
+        return floor.seats.filter(s => ['seat', 'group-seat'].includes(s.type)).length;
+    }
+    return 0;
   }
   
   if (loading) {
@@ -105,11 +120,11 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
                         <div key={floor.id} className="border p-4 rounded-lg flex justify-between items-center">
                             <div>
                                 <h3 className="font-semibold">{floor.name}</h3>
-                                <p className="text-sm text-muted-foreground">{floor.seats.filter(s => ['seat', 'group-seat'].includes(s.type)).length} seats</p>
+                                <p className="text-sm text-muted-foreground">{getSeatCount(floor)} seats</p>
                             </div>
                             <Button asChild variant="outline">
                                 <Link href={`/admin/library/${library.id}/floor/${floor.id}`}>
-                                    Edit Layout
+                                    <Edit className="mr-2 h-4 w-4" /> Edit Layout
                                 </Link>
                             </Button>
                         </div>
