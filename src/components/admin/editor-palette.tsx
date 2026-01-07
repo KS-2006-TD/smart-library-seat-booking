@@ -1,99 +1,58 @@
 'use client';
 
 import { Seat } from '@/lib/data';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Armchair, Users, Trash2, Milestone, Sun, Book, Coffee, DoorOpen, Ban } from 'lucide-react';
-import { useEffect } from 'react';
+import { Armchair, Users, Milestone, Sun, Book, Coffee, DoorOpen, Ban } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
+
+export type BrushType = Seat['type'];
 
 interface EditorPaletteProps {
-  selectedSeat: Seat | null;
-  onUpdateSeat: (updatedSeat: Partial<Seat>) => void;
+  activeBrush: BrushType;
+  onBrushSelect: (brush: BrushType) => void;
 }
 
-const seatTypes: { value: Seat['type'], label: string, icon: React.ReactNode }[] = [
-    { value: 'space', label: 'Empty Space', icon: <Ban className="w-4 h-4" /> },
-    { value: 'seat', label: 'Single Seat', icon: <Armchair className="w-4 h-4" /> },
-    { value: 'group-seat', label: 'Group Seat', icon: <Users className="w-4 h-4" /> },
-    { value: 'wall', label: 'Wall', icon: <Milestone className="w-4 h-4" /> },
-    { value: 'window', label: 'Window', icon: <Sun className="w-4 h-4" /> },
-    { value: 'book-shelf', label: 'Bookshelf', icon: <Book className="w-4 h-4" /> },
-    { value: 'coffee-station', label: 'Coffee Station', icon: <Coffee className="w-4 h-4" /> },
-    { value: 'entrance', label: 'Entrance', icon: <DoorOpen className="w-4 h-4" /> },
+const seatTypes: { value: BrushType, label: string, icon: React.ReactNode, color: string }[] = [
+    { value: 'seat', label: 'Single Seat', icon: <Armchair className="w-5 h-5" />, color: 'bg-green-200' },
+    { value: 'group-seat', label: 'Group Seat', icon: <Users className="w-5 h-5" />, color: 'bg-blue-200' },
+    { value: 'wall', label: 'Wall', icon: <Milestone className="w-5 h-5" />, color: 'bg-slate-400' },
+    { value: 'window', label: 'Window', icon: <Sun className="w-5 h-5" />, color: 'bg-blue-100' },
+    { value: 'book-shelf', label: 'Bookshelf', icon: <Book className="w-5 h-5" />, color: 'bg-orange-100' },
+    { value: 'coffee-station', label: 'Coffee Station', icon: <Coffee className="w-5 h-5" />, color: 'bg-yellow-100' },
+    { value: 'entrance', label: 'Entrance', icon: <DoorOpen className="w-5 h-5" />, color: 'bg-gray-300' },
+    { value: 'space', label: 'Eraser / Space', icon: <Ban className="w-5 h-5" />, color: 'bg-gray-100/50' },
 ];
 
-export default function EditorPalette({ selectedSeat, onUpdateSeat }: EditorPaletteProps) {
-
-  const handleTypeChange = (type: Seat['type']) => {
-    const isSeat = ['seat', 'group-seat'].includes(type);
-    onUpdateSeat({ type, label: isSeat ? selectedSeat?.label || '' : '' });
-  }
-  
-  const handleLabelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onUpdateSeat({ label: e.target.value });
-  }
-
-  const handleClearLabel = () => {
-    onUpdateSeat({ label: '' });
-  }
-
-
-  if (!selectedSeat) {
-    return (
-      <Card className="h-full">
-        <CardHeader>
-          <CardTitle>Floor Plan Editor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">Select a cell on the grid to start editing its properties.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const isSeat = ['seat', 'group-seat'].includes(selectedSeat.type);
-
+export default function EditorPalette({ activeBrush, onBrushSelect }: EditorPaletteProps) {
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>Edit Cell</CardTitle>
-        <CardDescription>Cell ID: {selectedSeat.id}</CardDescription>
+        <CardTitle>Drawing Tools</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-            <Label>Cell Type</Label>
-            <Select value={selectedSeat.type} onValueChange={(value: Seat['type']) => handleTypeChange(value)}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select cell type" />
-                </SelectTrigger>
-                <SelectContent>
-                    {seatTypes.map(item => (
-                        <SelectItem key={item.value} value={item.value}>
-                           <div className="flex items-center gap-2">
-                             {item.icon}
-                             <span>{item.label}</span>
-                           </div>
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-        </div>
-
-        {isSeat && (
-            <div className="space-y-2">
-                <Label htmlFor="seat-label">Seat Label</Label>
-                <div className="flex items-center gap-2">
-                    <Input id="seat-label" value={selectedSeat.label || ''} onChange={handleLabelChange} placeholder="e.g. A12" />
-                    <Button variant="ghost" size="icon" onClick={handleClearLabel} aria-label="Clear label">
-                        <Trash2 className="w-4 h-4 text-muted-foreground" />
-                    </Button>
+      <CardContent className="flex-1 p-2">
+        <ScrollArea className="h-full pr-3">
+          <div className="grid grid-cols-2 gap-2">
+            {seatTypes.map(item => (
+              <Button
+                key={item.value}
+                variant="outline"
+                onClick={() => onBrushSelect(item.value)}
+                className={cn(
+                  'h-20 flex-col gap-2',
+                  activeBrush === item.value && 'ring-2 ring-primary border-primary'
+                )}
+                aria-label={`Select ${item.label} brush`}
+              >
+                <div className={cn("w-8 h-8 rounded-md flex items-center justify-center", item.color)}>
+                  {item.icon}
                 </div>
-                 <p className="text-xs text-muted-foreground">Give this seat a unique identifier.</p>
-            </div>
-        )}
+                <span className="text-xs text-center">{item.label}</span>
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

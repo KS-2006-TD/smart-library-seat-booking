@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { libraries, Seat, Floor } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import EditorPalette from '@/components/admin/editor-palette';
+import EditorPalette, { BrushType } from '@/components/admin/editor-palette';
 
-function EditableSeat({ seat, onClick, isSelected }: { seat: Seat, onClick: (seat: Seat) => void, isSelected: boolean }) {
+function EditableSeat({ seat, onMouseDown, onMouseEnter }: { seat: Seat, onMouseDown: (seatId: string) => void, onMouseEnter: (seatId: string) => void }) {
   const seatTypeIcons: { [key in Seat['type']]: React.ReactNode } = {
     seat: <div className="w-full h-full bg-green-200 rounded-sm" />,
     'group-seat': <div className="w-full h-full bg-blue-200 rounded-sm" />,
@@ -23,18 +23,15 @@ function EditableSeat({ seat, onClick, isSelected }: { seat: Seat, onClick: (sea
   };
 
   return (
-    <button
-      onClick={() => onClick(seat)}
-      className={cn(
-        'aspect-square rounded-sm p-0.5 transition-all duration-150 relative flex items-center justify-center border-2',
-        isSelected ? 'border-primary ring-2 ring-primary' : 'border-transparent',
-        'hover:border-primary/50'
-      )}
+    <div
+      onMouseDown={() => onMouseDown(seat.id)}
+      onMouseEnter={() => onMouseEnter(seat.id)}
+      className='aspect-square rounded-sm p-0.5 transition-all duration-150 relative flex items-center justify-center border-2 border-transparent hover:border-primary/50 cursor-crosshair'
       aria-label={`Grid cell ${seat.id}, Type: ${seat.type}`}
     >
       {seatTypeIcons[seat.type]}
       {seat.label && <span className="absolute text-[7px] font-bold text-black/60 pointer-events-none">{seat.label}</span>}
-    </button>
+    </div>
   );
 }
 
@@ -45,6 +42,8 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
 
   const [floorData, setFloorData] = useState<Floor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [activeBrush, setActiveBrush] = useState<BrushType>('seat');
 
   useEffect(() => {
     if (libraryId && floorId) {
@@ -54,24 +53,53 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
     }
     setLoading(false);
   }, [libraryId, floorId]);
-
-  const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
   
-  const handleSeatClick = (seat: Seat) => {
-    setSelectedSeat(seat);
-  };
-  
-  const updateSeat = (updatedSeat: Partial<Seat>) => {
-    if (!selectedSeat) return;
-
-    const newSeatData: Seat = { ...selectedSeat, ...updatedSeat };
-    setSelectedSeat(newSeatData);
+  const updateSeat = (seatId: string) => {
+    if (!activeBrush) return;
 
     setFloorData(prevFloor => {
         if(!prevFloor) return null;
-        const newSeats = prevFloor.seats.map(s => s.id === newSeatData.id ? newSeatData : s);
+        
+        let seatCounter = prevFloor.seats.filter(s => s.type === 'seat' || s.type === 'group-seat').length;
+
+        const newSeats = prevFloor.seats.map(s => {
+            if (s.id === seatId) {
+                const oldType = s.type;
+                const newType = activeBrush;
+                let newLabel = s.label;
+
+                const wasSeat = oldType === 'seat' || oldType === 'group-seat';
+                const isSeat = newType === 'seat' || newType === 'group-seat';
+
+                if (isSeat && !wasSeat) {
+                    seatCounter++;
+                    newLabel = `${newType === 'seat' ? 'S' : 'G'}${seatCounter}`;
+                } else if (!isSeat && wasSeat) {
+                    newLabel = '';
+                }
+
+                return { ...s, type: newType, label: newLabel };
+            }
+            return s;
+        });
+
         return {...prevFloor, seats: newSeats };
     });
+  }
+
+  const handleMouseDown = (seatId: string) => {
+    setIsDrawing(true);
+    updateSeat(seatId);
+  }
+
+  const handleMouseUp = () => {
+    setIsDrawing(false);
+  }
+
+  const handleMouseEnter = (seatId: string) => {
+    if (isDrawing) {
+        updateSeat(seatId);
+    }
   }
 
   const handleSaveChanges = () => {
@@ -93,16 +121,22 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
 
   return (
     <div className="flex h-screen bg-muted/40">
-      <div className="flex-1 flex flex-col p-4 gap-4">
+      <div className="w-[300px] bg-background border-r border-border p-4 shadow-lg flex flex-col">
+         <div className="mb-4">
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Library
+            </Button>
+         </div>
+         <EditorPalette activeBrush={activeBrush} onBrushSelect={setActiveBrush} />
+      </div>
+      <div className="flex-1 flex flex-col p-4 gap-4" onMouseUp={handleMouseUp}>
         <div className="flex justify-between items-center bg-background p-3 rounded-lg shadow-sm">
             <div>
-                 <Button variant="outline" size="sm" onClick={() => router.back()}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Library
-                </Button>
                 <h1 className="text-2xl font-bold font-headline ml-4 inline-block align-middle">
                     Editing: {floorData.name}
                 </h1>
+                <p className='text-sm text-muted-foreground ml-4'>Click and drag on the grid to draw your layout.</p>
             </div>
             <Button onClick={handleSaveChanges}>
                 <Save className="mr-2 h-4 w-4" />
@@ -114,21 +148,19 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
             <div 
               className="grid gap-1" 
               style={{gridTemplateColumns: `repeat(${floorData.gridSize.cols}, minmax(0, 1fr))`}}
+              onMouseLeave={handleMouseUp} // Stop drawing if mouse leaves grid
             >
               {floorData.seats.map(seat => (
                 <EditableSeat 
                     key={seat.id} 
-                    seat={seat} 
-                    onClick={handleSeatClick} 
-                    isSelected={selectedSeat?.id === seat.id}
+                    seat={seat}
+                    onMouseDown={handleMouseDown}
+                    onMouseEnter={handleMouseEnter}
                 />
               ))}
             </div>
           </CardContent>
         </Card>
-      </div>
-      <div className="w-[300px] bg-background border-l border-border p-4 shadow-lg">
-         <EditorPalette selectedSeat={selectedSeat} onUpdateSeat={updateSeat} />
       </div>
     </div>
   );
