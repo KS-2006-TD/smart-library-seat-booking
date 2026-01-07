@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-type UserRole = 'user' | 'admin';
+export type UserRole = 'user' | 'admin';
 
 interface User {
   uid: string;
@@ -16,7 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string) => void;
+  login: (email: string, role: UserRole) => void;
   logout: () => void;
 }
 
@@ -39,18 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = (email: string) => {
-    const role = email === ADMIN_EMAIL ? 'admin' : 'user';
+  const login = (email: string, role: UserRole) => {
+    // In a real app, you might validate the admin role against a backend.
+    // For this mock, we trust the role from the login page, but double-check if the email matches.
+    const finalRole = (role === 'admin' && email === ADMIN_EMAIL) ? 'admin' : 'user';
+
     const mockUser: User = {
       uid: 'mock-uid-' + Math.random(),
       email: email,
       displayName: email.split('@')[0],
       photoURL: `https://i.pravatar.cc/150?u=${email}`,
-      role,
+      role: finalRole,
     };
     setUser(mockUser);
     sessionStorage.setItem('seatly-user', JSON.stringify(mockUser));
-    if (role === 'admin') {
+    
+    if (finalRole === 'admin') {
       router.push('/admin');
     } else {
       router.push('/dashboard');
