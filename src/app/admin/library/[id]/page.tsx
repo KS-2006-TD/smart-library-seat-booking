@@ -2,23 +2,26 @@
 
 import { useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries, Seat, Floor } from '@/lib/data';
+import { libraries } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, PlusCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function EditLibraryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  // We find the library from the initial data. In a real app this would be a state managed with fetching.
+  const initialLibrary = libraries.find(l => l.id === params.id);
+
   const [library, setLibrary] = useState(() => {
-    const lib = libraries.find(l => l.id === params.id);
-    if (!lib) return null;
-    return { ...lib };
+    if (!initialLibrary) return null;
+    return { ...initialLibrary };
   });
-  
+
   if (!library) {
     notFound();
   }
@@ -41,21 +44,14 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
     console.log("Adding a new floor...");
     toast({
         title: 'Feature Coming Soon',
-        description: 'The ability to add and design new floors is under development.',
-    });
-  }
-
-  const handleEditLayout = () => {
-    toast({
-        title: 'Feature Coming Soon',
-        description: 'The floor plan editor is currently under development.',
+        description: 'The ability to add new floors is under development.',
     });
   }
 
   return (
     <div className="container py-8">
         <div className="mb-6">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin')}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Admin Panel
             </Button>
@@ -97,7 +93,11 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
                                 <h3 className="font-semibold">{floor.name}</h3>
                                 <p className="text-sm text-muted-foreground">{floor.seats.filter(s => ['seat', 'group-seat'].includes(s.type)).length} seats</p>
                             </div>
-                            <Button variant="outline" onClick={handleEditLayout}>Edit Layout</Button>
+                            <Button asChild variant="outline">
+                                <Link href={`/admin/library/${library.id}/floor/${floor.id}`}>
+                                    Edit Layout
+                                </Link>
+                            </Button>
                         </div>
                     ))}
                      <Button variant="secondary" className="w-full" onClick={handleAddFloor}>

@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/auth-context';
-import Header from '@/components/layout/header';
-import Footer from '@/components/layout/footer';
 import { cn } from '@/lib/utils';
+import LayoutClient from './layout-client';
 
 export const metadata: Metadata = {
   title: 'Seatmylibrary',
@@ -25,10 +23,9 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased h-full flex flex-col', 'font-body')}>
         <AuthProvider>
-          <Header />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          <Toaster />
+          <LayoutClient>
+            {children}
+          </LayoutClient>
         </AuthProvider>
       </body>
     </html>
