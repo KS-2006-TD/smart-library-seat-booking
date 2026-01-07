@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Library, LogOut, LayoutDashboard } from 'lucide-react';
+import { Library, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {
@@ -16,13 +16,9 @@ export default function Header() {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
-
-  const showAdminProfile = user?.role === 'admin' && pathname.startsWith('/admin');
-  const showUserProfile = user?.role === 'user';
-  const showLoginButton = !user && !pathname.includes('/login');
   
-  const shouldShowProfile = showAdminProfile || showUserProfile;
-
+  const showProfile = user && !(user.role === 'admin' && !pathname.startsWith('/admin'));
+  const showLoginButton = !user && !pathname.includes('/login');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,7 +31,7 @@ export default function Header() {
         <div className="flex items-center justify-end space-x-4">
           {loading ? (
             <div className="h-8 w-20 animate-pulse rounded-md bg-muted"></div>
-          ) : shouldShowProfile ? (
+          ) : showProfile ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -54,7 +50,7 @@ export default function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href={user.role === 'admin' ? "/admin" : "/dashboard"}><LayoutDashboard className="mr-2 h-4 w-4" /> {user.role === 'admin' ? "Admin Panel" : "Dashboard"}</Link>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                   </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
