@@ -10,25 +10,28 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { libraries as initialLibraries, locations as initialLocations, Location, Library } from '@/lib/data';
+import { Check } from 'lucide-react';
 
 const mockBookings = [
   { id: 'b1', student: 'Alice Johnson', library: 'Main Research Library', seat: 'A5', status: 'Pending' },
   { id: 'b2', student: 'Michael Chen', library: 'Science & Engineering Library', seat: 'C12', status: 'Booked' },
   { id: 'b3', student: 'David Lee', library: 'Main Research Library', seat: 'F8', status: 'Pending' },
   { id: 'b4', student: 'Sarah Williams', library: 'Arts & Humanities Library', seat: 'B2', status: 'Occupied' },
+  { id: 'b5', student: 'Emily Brown', library: 'Main Research Library', seat: 'G2-7', status: 'Booked' },
 ];
+
+type BookingStatus = 'Pending' | 'Booked' | 'Occupied' | 'Rejected';
 
 function AdminDashboard() {
   const [libraries, setLibraries] = useState<Library[]>(initialLibraries);
   const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const [bookings, setBookings] = useState(mockBookings);
 
   const [newLibraryName, setNewLibraryName] = useState('');
   const [newLibraryAddress, setNewLibraryAddress] = useState('');
   const [newLocationName, setNewLocationName] = useState('');
 
   const handleAddLibrary = () => {
-    // In a real app, you'd also select a location and define floors/seats.
-    // This is a simplified mock for now.
     if (!newLibraryName || !newLibraryAddress) return;
     const newLibrary: Library = {
         id: `lib-${Date.now()}`,
@@ -52,6 +55,20 @@ function AdminDashboard() {
     setLocations([...locations, newLocation]);
     setNewLocationName('');
   };
+  
+  const handleBookingAction = (bookingId: string, newStatus: BookingStatus) => {
+    // This is a mock update. In a real app, this would update Firestore.
+    setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
+  };
+  
+  const getBadgeVariant = (status: BookingStatus) => {
+    switch (status) {
+        case 'Pending': return 'default';
+        case 'Booked': return 'secondary';
+        case 'Occupied': return 'destructive';
+        default: return 'outline';
+    }
+  }
 
   return (
     <div className="container py-8">
@@ -61,15 +78,15 @@ function AdminDashboard() {
       </div>
       <Tabs defaultValue="bookings" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="bookings">Approve Bookings</TabsTrigger>
+          <TabsTrigger value="bookings">Manage Bookings</TabsTrigger>
           <TabsTrigger value="libraries">Manage Libraries</TabsTrigger>
           <TabsTrigger value="locations">Manage Locations</TabsTrigger>
         </TabsList>
         <TabsContent value="bookings">
           <Card>
             <CardHeader>
-              <CardTitle>Booking Approvals</CardTitle>
-              <CardDescription>Review and approve pending seat bookings.</CardDescription>
+              <CardTitle>Booking Management</CardTitle>
+              <CardDescription>Review pending requests and manage active bookings.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -83,20 +100,23 @@ function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockBookings.map(booking => (
+                  {bookings.map(booking => (
                     <TableRow key={booking.id}>
                       <TableCell>{booking.student}</TableCell>
                       <TableCell>{booking.library}</TableCell>
                       <TableCell>{booking.seat}</TableCell>
                       <TableCell>
-                        <Badge variant={booking.status === 'Pending' ? 'destructive' : 'default'}>{booking.status}</Badge>
+                        <Badge variant={getBadgeVariant(booking.status as BookingStatus)}>{booking.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {booking.status === 'Pending' && (
                           <div className="space-x-2">
-                             <Button size="sm" variant="outline">Decline</Button>
-                             <Button size="sm">Approve</Button>
+                             <Button size="sm" variant="outline" onClick={() => handleBookingAction(booking.id, 'Rejected')}>Decline</Button>
+                             <Button size="sm" onClick={() => handleBookingAction(booking.id, 'Booked')}>Approve</Button>
                           </div>
+                        )}
+                        {booking.status === 'Booked' && (
+                            <Button size="sm" onClick={() => handleBookingAction(booking.id, 'Occupied')}><Check className="mr-2 h-4 w-4" /> Check-in</Button>
                         )}
                       </TableCell>
                     </TableRow>
