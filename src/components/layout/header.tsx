@@ -16,8 +16,6 @@ export default function Header() {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
-  
-  const showLoginState = !['/login', '/'].includes(pathname) || user;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -27,7 +25,11 @@ export default function Header() {
           <span className="font-bold font-headline sm:inline-block">Seatmylibrary</span>
         </Link>
         <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-          {user && <Link href={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">Dashboard</Link>}
+          {user && (
+            <Link href={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">
+              Dashboard
+            </Link>
+          )}
         </nav>
         <div className="flex items-center justify-end space-x-4">
           {loading ? (
