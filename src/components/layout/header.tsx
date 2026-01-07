@@ -17,6 +17,13 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const showAdminProfile = user?.role === 'admin' && pathname.startsWith('/admin');
+  const showUserProfile = user?.role === 'user';
+  const showLoginButton = !user && !pathname.includes('/login');
+  
+  const shouldShowProfile = showAdminProfile || showUserProfile;
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -28,7 +35,7 @@ export default function Header() {
         <div className="flex items-center justify-end space-x-4">
           {loading ? (
             <div className="h-8 w-20 animate-pulse rounded-md bg-muted"></div>
-          ) : user ? (
+          ) : shouldShowProfile ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -47,7 +54,7 @@ export default function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                    <Link href={user.role === 'admin' ? "/admin" : "/dashboard"}><LayoutDashboard className="mr-2 h-4 w-4" /> {user.role === 'admin' ? "Admin Panel" : "Dashboard"}</Link>
                   </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
@@ -56,13 +63,11 @@ export default function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            !pathname.includes('/login') && (
+          ) : showLoginButton ? (
                 <Button asChild>
                     <Link href="/login">Login</Link>
                 </Button>
-            )
-          )}
+          ) : null}
         </div>
       </div>
     </header>
