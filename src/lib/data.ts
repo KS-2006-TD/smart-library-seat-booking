@@ -2,7 +2,7 @@ export interface Seat {
   id: string;
   label: string;
   status: 'Available' | 'Occupied' | 'Booked' | 'Pending';
-  type: 'seat' | 'space' | 'wall' | 'window';
+  type: 'seat' | 'group-seat' | 'space' | 'wall' | 'window' | 'book-shelf' | 'coffee-station' | 'entrance';
 }
 
 export interface Floor {
@@ -10,6 +10,7 @@ export interface Floor {
   level: number;
   name: string;
   seats: Seat[];
+  gridSize: { cols: number; rows: number };
 }
 
 export interface Library {
@@ -23,7 +24,7 @@ export interface Library {
 
 export interface Location {
   id: string;
-  name: string;
+  name:string;
 }
 
 export const locations: Location[] = [
@@ -32,29 +33,89 @@ export const locations: Location[] = [
   { id: 'loc-3', name: 'Westwood Campus' },
 ];
 
-const generateSeats = (floorId: string): Seat[] => {
+const generateSeatsForFloor1 = (floorId: string): Floor => {
     const seats: Seat[] = [];
-    const rows = 10;
-    const cols = 15;
+    const rows = 12;
+    const cols = 16;
+
     for (let i = 0; i < rows; i++) {
         for (let j = 0; j < cols; j++) {
             const id = `${floorId}-s-${i}-${j}`;
-            if (i === 0 || i === rows - 1) {
-                seats.push({ id, label: '', type: 'wall', status: 'Available' });
-            } else if (j === 0 || j === cols - 1) {
-                 seats.push({ id, label: '', type: 'window', status: 'Available' });
-            } else if (j % 4 === 0 || i % 3 === 0) {
-                seats.push({ id, label: '', type: 'space', status: 'Available' });
-            } else {
-                const statuses: Seat['status'][] = ['Available', 'Occupied', 'Booked'];
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
-                const label = `${String.fromCharCode(65 + i-1)}${j}`;
-                seats.push({ id, label, type: 'seat', status });
+            let type: Seat['type'] = 'space';
+            let label = '';
+
+            // Walls
+            if (i === 0 || i === rows - 1 || j === 0 || j === cols - 1) {
+                type = (j === 0 || j === cols - 1) && i > 0 && i < rows -1 ? 'window' : 'wall';
             }
+            // Entrance
+            else if (i === rows - 2 && j > 6 && j < 10) {
+                 type = 'entrance';
+            }
+            // Shelves
+            else if (j === 4 || j === 11) {
+                type = 'book-shelf';
+            }
+            // Group seats
+            else if ((i === 2 || i === 5 || i === 8) && (j === 2 || j === 7 || j === 13)) {
+                type = 'group-seat';
+                label = `G${i}-${j}`;
+            }
+            // Single seats
+            else if ((i % 2 !== 0) && (j > 1 && j < 15 && j !== 4 && j !== 7 && j !== 11)) {
+                 type = 'seat';
+                 label = `S${i}-${j}`;
+            }
+            
+            const statuses: Seat['status'][] = ['Available', 'Occupied', 'Booked', 'Pending'];
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+            seats.push({ id, label, type, status: type === 'seat' || type === 'group-seat' ? status : 'Available'});
         }
     }
-    return seats;
+    return { id: floorId, level: 1, name: 'First Floor - Main Hall', seats, gridSize: { cols, rows } };
 }
+
+const generateSeatsForFloor2 = (floorId: string): Floor => {
+    const seats: Seat[] = [];
+    const rows = 10;
+    const cols = 20;
+
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            const id = `${floorId}-s-${i}-${j}`;
+            let type: Seat['type'] = 'space';
+            let label = '';
+             // Walls
+            if (i === 0 || i === rows - 1) {
+                type = 'wall';
+            }
+            else if(j === 0 || j === cols - 1) {
+                type = 'window';
+            }
+            // Coffee station
+            else if (i === 1 && j > 1 && j < 5) {
+                type = 'coffee-station';
+            }
+             // Shelves
+            else if (j === 9 || j === 10) {
+                type = 'book-shelf';
+            }
+            // Seats
+            else if (i % 2 === 0 && j > 1 && j < cols - 2 && j !== 9 && j !== 10) {
+                type = 'seat';
+                label = `Q${i}-${j}`;
+            }
+
+            const statuses: Seat['status'][] = ['Available', 'Available', 'Occupied'];
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+            seats.push({ id, label, type, status: type === 'seat' ? status : 'Available'});
+        }
+    }
+    return { id: floorId, level: 2, name: 'Second Floor - Quiet Zone', seats, gridSize: { cols, rows } };
+}
+
 
 export const libraries: Library[] = [
   {
@@ -64,8 +125,8 @@ export const libraries: Library[] = [
     address: '123 University Ave, Downtown',
     imageUrl: 'https://picsum.photos/seed/lib1/600/400',
     floors: [
-      { id: 'lib-1-f1', level: 1, name: 'First Floor - Quiet Zone', seats: generateSeats('lib-1-f1') },
-      { id: 'lib-1-f2', level: 2, name: 'Second Floor - Group Study', seats: generateSeats('lib-1-f2') },
+      generateSeatsForFloor1('lib-1-f1'),
+      generateSeatsForFloor2('lib-1-f2'),
     ],
   },
   {
@@ -75,9 +136,7 @@ export const libraries: Library[] = [
     address: '456 Innovation Dr, North Campus',
     imageUrl: 'https://picsum.photos/seed/lib2/600/400',
     floors: [
-      { id: 'lib-2-f1', level: 1, name: 'Ground Floor - Periodicals', seats: generateSeats('lib-2-f1') },
-      { id: 'lib-2-f2', level: 2, name: 'Second Floor - Labs', seats: generateSeats('lib-2-f2') },
-      { id: 'lib-2-f3', level: 3, name: 'Third Floor - Reading Room', seats: generateSeats('lib-2-f3') },
+       generateSeatsForFloor1('lib-2-f1'),
     ],
   },
   {
@@ -87,7 +146,7 @@ export const libraries: Library[] = [
     address: '789 Culture St, Downtown',
     imageUrl: 'https://picsum.photos/seed/lib3/600/400',
     floors: [
-      { id: 'lib-3-f1', level: 1, name: 'Main Hall', seats: generateSeats('lib-3-f1') },
+       generateSeatsForFloor2('lib-3-f1'),
     ],
   },
    {
@@ -97,8 +156,8 @@ export const libraries: Library[] = [
     address: '101 Health Sci Pkwy, Westwood',
     imageUrl: 'https://picsum.photos/seed/lib4/600/400',
     floors: [
-      { id: 'lib-4-f1', level: 1, name: 'Main Floor', seats: generateSeats('lib-4-f1') },
-      { id: 'lib-4-f2', level: 2, name: 'Research Wing', seats: generateSeats('lib-4-f2') },
+      generateSeatsForFloor1('lib-4-f1'),
+      generateSeatsForFloor2('lib-4-f2'),
     ],
   },
 ];
