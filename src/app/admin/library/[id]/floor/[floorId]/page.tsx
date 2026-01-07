@@ -41,10 +41,11 @@ function EditableSeat({ seat, onClick, isSelected }: { seat: Seat, onClick: (sea
 export default function FloorEditorPage({ params }: { params: { libraryId: string, floorId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  const [currentParams] = useState(params);
 
   const [floorData, setFloorData] = useState<Floor | null>(() => {
-    const lib = libraries.find(l => l.id === params.libraryId);
-    return lib?.floors.find(f => f.id === params.floorId) ?? null;
+    const lib = libraries.find(l => l.id === currentParams.libraryId);
+    return lib?.floors.find(f => f.id === currentParams.floorId) ?? null;
   });
 
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);

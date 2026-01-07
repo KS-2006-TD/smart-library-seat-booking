@@ -14,8 +14,11 @@ import Link from 'next/link';
 export default function EditLibraryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  // Store params in state to avoid issues with Next.js router changes.
+  const [currentParams] = useState(params);
+
   // We find the library from the initial data. In a real app this would be a state managed with fetching.
-  const initialLibrary = libraries.find(l => l.id === params.id);
+  const initialLibrary = libraries.find(l => l.id === currentParams.id);
 
   const [library, setLibrary] = useState(() => {
     if (!initialLibrary) return null;

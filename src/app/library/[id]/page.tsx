@@ -79,9 +79,10 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
   const [suggestedSeats, setSuggestedSeats] = useState<string[]>([]);
   const [timeSlot, setTimeSlot] = useState<string>('');
   const { toast } = useToast();
+  const [currentParams] = useState(params);
 
   // Use state for libraries to allow updates
-  const [libraryData, setLibraryData] = useState(() => libraries.find(lib => lib.id === params.id));
+  const [libraryData, setLibraryData] = useState(() => libraries.find(lib => lib.id === currentParams.id));
 
   if (!libraryData) {
     notFound();
