@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { locations } from '@/lib/data';
+import { getLocations } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ProfileSetupDialog() {
@@ -16,6 +16,7 @@ export default function ProfileSetupDialog() {
   const [locationId, setLocationId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const locations = getLocations();
 
   const handleSave = () => {
     if (!displayName || !locationId) {

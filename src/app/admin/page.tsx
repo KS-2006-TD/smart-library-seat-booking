@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useReducer } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { libraries as initialLibraries, locations as initialLocations, Location, Library } from '@/lib/data';
+import { getLibraries, getLocations, addLibrary, addLocation } from '@/lib/store';
+import { Location, Library } from '@/lib/data';
 import { Check, Edit } from 'lucide-react';
 import Link from 'next/link';
 
@@ -24,8 +25,11 @@ const mockBookings = [
 type BookingStatus = 'Pending' | 'Booked' | 'Occupied' | 'Rejected';
 
 function AdminDashboard() {
-  const [libraries, setLibraries] = useState<Library[]>(initialLibraries);
-  const [locations, setLocations] = useState<Location[]>(initialLocations);
+  // useReducer to force re-renders when the store is updated.
+  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
+
+  const libraries = getLibraries();
+  const locations = getLocations();
   const [bookings, setBookings] = useState(mockBookings);
 
   const [newLibraryName, setNewLibraryName] = useState('');
@@ -42,9 +46,10 @@ function AdminDashboard() {
         imageUrl: 'https://picsum.photos/seed/newlib/600/400',
         floors: [],
     };
-    setLibraries([...libraries, newLibrary]);
+    addLibrary(newLibrary);
     setNewLibraryName('');
     setNewLibraryAddress('');
+    forceUpdate();
   };
 
   const handleAddLocation = () => {
@@ -53,8 +58,9 @@ function AdminDashboard() {
         id: `loc-${Date.now()}`,
         name: newLocationName,
     };
-    setLocations([...locations, newLocation]);
+    addLocation(newLocation);
     setNewLocationName('');
+    forceUpdate();
   };
   
   const handleBookingAction = (bookingId: string, newStatus: BookingStatus) => {

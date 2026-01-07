@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries, Library, Floor } from '@/lib/data';
+import { Floor, Library } from '@/lib/data';
+import { getLibraries, getLocations, findLibrary, updateLibrary, getFloor } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     if (libraryId) {
-      const initialLibrary = libraries.find(l => l.id === libraryId);
+      const initialLibrary = findLibrary(libraryId);
       if (initialLibrary) {
         setLibrary({ ...initialLibrary });
         setLibraryName(initialLibrary.name);
@@ -41,13 +41,12 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
   
   const handleSaveChanges = () => {
     if (!library) return;
-    // In a real app, this would save to Firestore
-    console.log('Saving changes for library:', library.id, { name: libraryName, address: libraryAddress });
+    updateLibrary(library.id, { name: libraryName, address: libraryAddress });
     toast({
         title: 'Changes Saved!',
         description: `${libraryName} has been updated.`,
     });
-    // Here you would update the global state or refetch data
+    // Here you might want to force a re-render or redirect
   };
 
   const handleAddFloor = () => {

@@ -1,15 +1,14 @@
-
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { notFound } from 'next/navigation';
-import { libraries, Seat as SeatType, Floor, Library, TableGroup } from '@/lib/data';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Armchair, Users, Info, X, Sun, Tv, Book, Coffee, DoorOpen, Clock } from 'lucide-react';
+import { Seat as SeatType, Floor, Library, TableGroup } from '@/lib/data';
+import { findLibrary, updateSeatStatus } from '@/lib/store';
+import { Card, CardContent } from '@/components/ui/card';
+import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import SeatSuggestionForm from '@/components/ai/seat-suggestion-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
@@ -147,9 +146,10 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (libraryId) {
-      const lib = libraries.find(l => l.id === libraryId);
+      const lib = findLibrary(libraryId);
       if (lib) {
-        setLibraryData(lib);
+        // Create a deep copy to prevent direct state mutation
+        setLibraryData(JSON.parse(JSON.stringify(lib)));
       }
       setLoading(false);
     }
@@ -189,23 +189,12 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
     console.log(`Booking request for seat ${selectedSeat.label} for ${timeSlot}`);
 
     setTimeout(() => {
-        setLibraryData(prevLibrary => {
-            if (!prevLibrary) return null;
+        // Update the central store
+        updateSeatStatus(libraryId, selectedSeat.id, 'Pending');
 
-            const newFloors = prevLibrary.floors.map(floor => {
-                if (!floor.layout?.tables) return floor;
-                const newTables = floor.layout.tables.map(table => ({
-                    ...table,
-                    seats: table.seats.map(seat => 
-                        seat.id === selectedSeat.id 
-                        ? { ...seat, status: 'Pending' as SeatType['status'] } 
-                        : seat
-                    )
-                }));
-                return { ...floor, layout: { ...floor.layout, tables: newTables }};
-            });
-            return { ...prevLibrary, floors: newFloors };
-        });
+        // Force re-fetch of library data to reflect update
+        const lib = findLibrary(libraryId);
+        setLibraryData(lib ? JSON.parse(JSON.stringify(lib)) : null);
 
         setIsBooking(false);
         setIsConfirming(false);

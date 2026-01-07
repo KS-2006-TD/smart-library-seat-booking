@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { libraries, locations, Location } from '@/lib/data';
+import { getLibraries, getLocations } from '@/lib/store';
+import { Location, Library } from '@/lib/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,6 +23,10 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [quote] = useState(motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
+  
+  // Get data from the central store
+  const libraries = getLibraries();
+  const locations = getLocations();
 
   useEffect(() => {
     // If the user has a preferred location, set it as the default filter

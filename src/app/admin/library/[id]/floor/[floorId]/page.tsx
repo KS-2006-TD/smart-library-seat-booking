@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
-import { libraries, Seat, Floor, TableGroup, OtherElement as OtherElementType } from '@/lib/data';
+import { Seat, Floor, TableGroup, OtherElement as OtherElementType } from '@/lib/data';
+import { getFloor, updateFloor } from '@/lib/store';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -126,9 +126,8 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
 
   useEffect(() => {
     if (libraryId && floorId) {
-        const lib = libraries.find(l => l.id === libraryId);
-        const floor = lib?.floors.find(f => f.id === floorId) ?? null;
-        setFloorData(floor);
+        const floor = getFloor(libraryId, floorId);
+        setFloorData(floor ?? null);
         setLoading(false);
     }
   }, [libraryId, floorId]);
@@ -202,12 +201,13 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
   }
 
   const handleSaveChanges = () => {
-    // In a real app, this would save the entire floorData object to Firestore
-    console.log("Saving floor layout:", floorData);
-    toast({
-        title: "Layout Saved!",
-        description: `Changes to ${floorData?.name} have been saved.`
-    });
+    if (floorData) {
+        updateFloor(libraryId, floorId, floorData);
+        toast({
+            title: "Layout Saved!",
+            description: `Changes to ${floorData.name} have been saved.`
+        });
+    }
   }
   
   if (loading) {
@@ -291,5 +291,3 @@ export default function FloorEditorPage({ params }: { params: { id: string, floo
     </div>
   );
 }
-
-    
