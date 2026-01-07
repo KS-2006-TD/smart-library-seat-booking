@@ -25,8 +25,8 @@ export default function Header() {
           <span className="font-bold font-headline sm:inline-block">Seatmylibrary</span>
         </Link>
         <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-          {user && (
-            <Link href={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">
+          {user && user.role !== 'admin' && (
+            <Link href={'/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">
               Dashboard
             </Link>
           )}
