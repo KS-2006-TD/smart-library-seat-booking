@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { libraries } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -14,25 +14,31 @@ import Link from 'next/link';
 export default function EditLibraryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  // Store params in state to avoid issues with Next.js router changes.
   const [currentParams] = useState(params);
+  const [library, setLibrary] = useState<typeof libraries[0] | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // We find the library from the initial data. In a real app this would be a state managed with fetching.
-  const initialLibrary = libraries.find(l => l.id === currentParams.id);
+  useEffect(() => {
+    const initialLibrary = libraries.find(l => l.id === currentParams.id);
+    if (initialLibrary) {
+      setLibrary({ ...initialLibrary });
+    }
+    setLoading(false);
+  }, [currentParams.id]);
+  
+  const [libraryName, setLibraryName] = useState('');
+  const [libraryAddress, setLibraryAddress] = useState('');
 
-  const [library, setLibrary] = useState(() => {
-    if (!initialLibrary) return null;
-    return { ...initialLibrary };
-  });
+  useEffect(() => {
+    if (library) {
+      setLibraryName(library.name);
+      setLibraryAddress(library.address);
+    }
+  }, [library]);
 
-  if (!library) {
-    notFound();
-  }
-
-  const [libraryName, setLibraryName] = useState(library.name);
-  const [libraryAddress, setLibraryAddress] = useState(library.address);
 
   const handleSaveChanges = () => {
+    if (!library) return;
     // In a real app, this would save to Firestore
     console.log('Saving changes for library:', library.id, { name: libraryName, address: libraryAddress });
     toast({
@@ -49,6 +55,14 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
         title: 'Feature Coming Soon',
         description: 'The ability to add new floors is under development.',
     });
+  }
+  
+  if (loading) {
+    return <div className="container py-8">Loading...</div>;
+  }
+
+  if (!library) {
+    notFound();
   }
 
   return (
