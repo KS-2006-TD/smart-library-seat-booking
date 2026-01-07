@@ -45,6 +45,13 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
     });
   }
 
+  const handleEditLayout = () => {
+    toast({
+        title: 'Feature Coming Soon',
+        description: 'The floor plan editor is currently under development.',
+    });
+  }
+
   return (
     <div className="container py-8">
         <div className="mb-6">
@@ -90,7 +97,7 @@ export default function EditLibraryPage({ params }: { params: { id: string } }) 
                                 <h3 className="font-semibold">{floor.name}</h3>
                                 <p className="text-sm text-muted-foreground">{floor.seats.filter(s => ['seat', 'group-seat'].includes(s.type)).length} seats</p>
                             </div>
-                            <Button variant="outline">Edit Layout</Button>
+                            <Button variant="outline" onClick={handleEditLayout}>Edit Layout</Button>
                         </div>
                     ))}
                      <Button variant="secondary" className="w-full" onClick={handleAddFloor}>
