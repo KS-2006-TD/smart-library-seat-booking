@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { BookOpen, Users, Search } from 'lucide-react';
+import { BookOpen, Users, Search, Building2, Armchair, Smile } from 'lucide-react';
 
 const features = [
   {
@@ -22,6 +22,24 @@ const features = [
     title: 'Collaborate Better',
     description: 'Book group study rooms and collaborate with your peers effectively.',
   },
+];
+
+const stats = [
+    {
+        icon: <Armchair className="w-8 h-8 text-accent" />,
+        value: '10,000+',
+        label: 'Seats Booked Monthly'
+    },
+    {
+        icon: <Building2 className="w-8 h-8 text-accent" />,
+        value: '3',
+        label: 'Cities Covered'
+    },
+    {
+        icon: <Smile className="w-8 h-8 text-accent" />,
+        value: '5,000+',
+        label: 'Happy Students'
+    }
 ];
 
 const reviews = [
@@ -103,6 +121,28 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Stats Section */}
+        <section id="stats" className="py-20 bg-muted/40">
+          <div className="container">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold font-headline">Our Impact in Numbers</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto mt-2">
+                Join thousands of students who trust us for their study needs.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              {stats.map((stat, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  {stat.icon}
+                  <p className="text-4xl font-bold mt-4">{stat.value}</p>
+                  <p className="text-muted-foreground mt-2">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
 
         {/* Testimonials Section */}
         <section id="reviews" className="py-20 bg-card">

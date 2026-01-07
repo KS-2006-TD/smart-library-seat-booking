@@ -1,9 +1,14 @@
-import { Library, Mail, Phone } from "lucide-react";
+import { Library, Mail, Phone, Heart } from "lucide-react";
 
 export default function Footer() {
   return (
     <footer className="bg-muted/40 border-t mt-auto">
       <div className="container py-8">
+        <div className="text-center mb-8">
+            <p className="flex items-center justify-center gap-2 text-muted-foreground">
+                Made with <Heart className="w-4 h-4 text-red-500" /> for students
+            </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="flex flex-col items-start">
             <div className="flex items-center space-x-2 mb-4">
