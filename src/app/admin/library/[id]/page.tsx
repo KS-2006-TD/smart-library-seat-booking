@@ -14,17 +14,17 @@ import Link from 'next/link';
 export default function EditLibraryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [currentParams] = useState(params);
+  const { id: libraryId } = params;
   const [library, setLibrary] = useState<typeof libraries[0] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initialLibrary = libraries.find(l => l.id === currentParams.id);
+    const initialLibrary = libraries.find(l => l.id === libraryId);
     if (initialLibrary) {
       setLibrary({ ...initialLibrary });
     }
     setLoading(false);
-  }, [currentParams.id]);
+  }, [libraryId]);
   
   const [libraryName, setLibraryName] = useState('');
   const [libraryAddress, setLibraryAddress] = useState('');

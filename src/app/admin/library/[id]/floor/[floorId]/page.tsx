@@ -41,17 +41,17 @@ function EditableSeat({ seat, onClick, isSelected }: { seat: Seat, onClick: (sea
 export default function FloorEditorPage({ params }: { params: { libraryId: string, floorId: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const [currentParams] = useState(params);
+  const { libraryId, floorId } = params;
 
   const [floorData, setFloorData] = useState<Floor | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const lib = libraries.find(l => l.id === currentParams.libraryId);
-    const floor = lib?.floors.find(f => f.id === currentParams.floorId) ?? null;
+    const lib = libraries.find(l => l.id === libraryId);
+    const floor = lib?.floors.find(f => f.id === floorId) ?? null;
     setFloorData(floor);
     setLoading(false);
-  }, [currentParams]);
+  }, [libraryId, floorId]);
 
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
   

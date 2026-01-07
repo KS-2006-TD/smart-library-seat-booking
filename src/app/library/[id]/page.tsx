@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { notFound } from 'next/navigation';
 import { libraries, Seat as SeatType, Floor } from '@/lib/data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -75,15 +75,21 @@ function SeatMap({ floor, onSeatSelect, suggestedSeats }: { floor: Floor, onSeat
 
 
 export default function LibraryPage({ params }: { params: { id: string } }) {
+  const { id: libraryId } = params;
   const [selectedSeat, setSelectedSeat] = useState<SeatType | null>(null);
   const [isBooking, setIsBooking] = useState(false);
   const [suggestedSeats, setSuggestedSeats] = useState<string[]>([]);
   const [timeSlot, setTimeSlot] = useState<string>('');
   const { toast } = useToast();
-  const [currentParams] = useState(params);
+  
+  const [libraryData, setLibraryData] = useState(() => libraries.find(lib => lib.id === libraryId));
 
-  // Use state for libraries to allow updates
-  const [libraryData, setLibraryData] = useState(() => libraries.find(lib => lib.id === currentParams.id));
+  useEffect(() => {
+    const lib = libraries.find(l => l.id === libraryId);
+    if (lib) {
+      setLibraryData(lib);
+    }
+  }, [libraryId]);
 
   if (!libraryData) {
     notFound();
@@ -138,11 +144,16 @@ export default function LibraryPage({ params }: { params: { id: string } }) {
   };
   
   const availableSeatsString = useMemo(() => {
+    if (!libraryData) return '';
     return libraryData.floors.flatMap(f => f.seats)
       .filter(s => ['seat', 'group-seat'].includes(s.type) && s.status === 'Available')
       .map(s => s.label)
       .join(', ');
-  }, [libraryData.floors]);
+  }, [libraryData]);
+
+  if (!libraryData) {
+    return <div>Loading library...</div>;
+  }
 
   return (
     <div className="container py-8">
