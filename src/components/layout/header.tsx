@@ -6,14 +6,18 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Library, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
   const { user, loading, logout } = useAuth();
+  const pathname = usePathname();
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
+  
+  const showLoginState = !['/login', '/'].includes(pathname) || user;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -62,9 +66,11 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild>
-              <Link href="/login">Login</Link>
-            </Button>
+            !pathname.includes('/login') && (
+                <Button asChild>
+                    <Link href="/login">Login</Link>
+                </Button>
+            )
           )}
         </div>
       </div>
