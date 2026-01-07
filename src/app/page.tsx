@@ -92,7 +92,7 @@ export default function Home() {
               The smartest way to find and book your ideal study spot in the library. Say goodbye to endless searching and hello to productive study sessions.
             </p>
             <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Link href="/login">Find a Seat Now</Link>
+              <Link href="/login">Get Started</Link>
             </Button>
           </div>
         </section>
