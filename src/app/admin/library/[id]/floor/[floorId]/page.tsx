@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { libraries, Seat, Floor } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,16 +43,17 @@ export default function FloorEditorPage({ params }: { params: { libraryId: strin
   const { toast } = useToast();
   const [currentParams] = useState(params);
 
-  const [floorData, setFloorData] = useState<Floor | null>(() => {
+  const [floorData, setFloorData] = useState<Floor | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
     const lib = libraries.find(l => l.id === currentParams.libraryId);
-    return lib?.floors.find(f => f.id === currentParams.floorId) ?? null;
-  });
+    const floor = lib?.floors.find(f => f.id === currentParams.floorId) ?? null;
+    setFloorData(floor);
+    setLoading(false);
+  }, [currentParams]);
 
   const [selectedSeat, setSelectedSeat] = useState<Seat | null>(null);
-
-  if (!floorData) {
-    notFound();
-  }
   
   const handleSeatClick = (seat: Seat) => {
     setSelectedSeat(seat);
@@ -76,8 +77,16 @@ export default function FloorEditorPage({ params }: { params: { libraryId: strin
     console.log("Saving floor layout:", floorData);
     toast({
         title: "Layout Saved!",
-        description: `Changes to ${floorData.name} have been saved.`
+        description: `Changes to ${floorData?.name} have been saved.`
     });
+  }
+  
+  if (loading) {
+    return <div className="flex h-screen w-full items-center justify-center"><p>Loading Editor...</p></div>;
+  }
+
+  if (!floorData) {
+    notFound();
   }
 
   return (
