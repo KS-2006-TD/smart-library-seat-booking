@@ -23,8 +23,7 @@ export default function Header() {
           <span className="font-bold font-headline sm:inline-block">Seatmylibrary</span>
         </Link>
         <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-          {user && <Link href="/dashboard" className="text-foreground/60 transition-colors hover:text-foreground/80">Dashboard</Link>}
-          {user?.role === 'admin' && <Link href="/admin" className="text-foreground/60 transition-colors hover:text-foreground/80">Admin</Link>}
+          {user && <Link href={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">Dashboard</Link>}
         </nav>
         <div className="flex items-center justify-end space-x-4">
           {loading ? (
@@ -48,7 +47,7 @@ export default function Header() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
+                  <Link href={user.role === 'admin' ? '/admin' : '/dashboard'}><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                 </DropdownMenuItem>
                 {user.role === 'admin' && (
                   <DropdownMenuItem asChild>
