@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import SeatSuggestionForm from '@/components/ai/seat-suggestion-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Label } from '@/components/ui/label';
 
 function Seat({ seat, onSeatClick, isSuggested }: { seat: SeatType, onSeatClick: (seat: SeatType) => void, isSuggested: boolean }) {
   const seatStatusClasses = {
