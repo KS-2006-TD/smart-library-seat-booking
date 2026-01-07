@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Library, LogOut, LayoutDashboard, User as UserIcon } from 'lucide-react';
+import { Library, LogOut, LayoutDashboard } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function Header() {
@@ -25,7 +25,7 @@ export default function Header() {
           <span className="font-bold font-headline sm:inline-block">Seatmylibrary</span>
         </Link>
         <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-          {user && user.role !== 'admin' && (
+          {user && (
             <Link href={'/dashboard'} className="text-foreground/60 transition-colors hover:text-foreground/80">
               Dashboard
             </Link>
@@ -52,15 +52,9 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {user.role === 'admin' ? (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin"><UserIcon className="mr-2 h-4 w-4" /> Admin Panel</Link>
-                  </DropdownMenuItem>
-                ) : (
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                   </DropdownMenuItem>
-                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
