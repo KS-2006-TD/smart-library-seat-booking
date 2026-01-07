@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { libraries as initialLibraries, locations as initialLocations, Location, Library } from '@/lib/data';
-import { Check } from 'lucide-react';
+import { Check, Edit } from 'lucide-react';
+import Link from 'next/link';
 
 const mockBookings = [
   { id: 'b1', student: 'Alice Johnson', library: 'Main Research Library', seat: 'A5', status: 'Pending' },
@@ -154,6 +155,7 @@ function AdminDashboard() {
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Address</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -161,6 +163,13 @@ function AdminDashboard() {
                             <TableRow key={lib.id}>
                                 <TableCell>{lib.name}</TableCell>
                                 <TableCell>{lib.address}</TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/admin/library/${lib.id}`}>
+                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                        </Link>
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
