@@ -52,12 +52,13 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={user.role === 'admin' ? '/admin' : '/dashboard'}><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
-                </DropdownMenuItem>
-                {user.role === 'admin' && (
+                {user.role === 'admin' ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin"><UserIcon className="mr-2 h-4 w-4" /> Admin Panel</Link>
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard</Link>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
