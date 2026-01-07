@@ -20,7 +20,7 @@ function Seat({ seat, onSeatClick, isSuggested }: { seat: SeatType, onSeatClick:
   };
 
   const seatTypeIcons = {
-    seat: <Armchair className="w-5/6 h-5/6" />,
+    seat: <Armchair className="w-4/6 h-4/6" />,
     wall: <div className="w-full h-full bg-gray-300" />,
     window: <div className="w-full h-full bg-blue-100 flex items-center justify-center"><Sun className="w-4 h-4 text-blue-400"/></div>,
     space: <div />,
@@ -52,7 +52,7 @@ function SeatMap({ floor, onSeatSelect, suggestedSeats }: { floor: Floor, onSeat
   return (
     <Card className="shadow-lg">
       <CardContent className="p-4 md:p-6">
-        <div className="grid grid-cols-15 gap-2 md:gap-3">
+        <div className="grid grid-cols-15 gap-1.5 md:gap-2.5">
           {floor.seats.map(seat => (
             <Seat key={seat.id} seat={seat} onSeatClick={onSeatSelect} isSuggested={suggestedSeats.includes(seat.label)} />
           ))}
