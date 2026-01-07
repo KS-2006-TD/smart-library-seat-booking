@@ -20,7 +20,7 @@ function Seat({ seat, onSeatClick, isSuggested }: { seat: SeatType, onSeatClick:
   };
 
   const seatTypeIcons = {
-    seat: <Armchair className="w-full h-full" />,
+    seat: <Armchair className="w-5/6 h-5/6" />,
     wall: <div className="w-full h-full bg-gray-300" />,
     window: <div className="w-full h-full bg-blue-100 flex items-center justify-center"><Sun className="w-4 h-4 text-blue-400"/></div>,
     space: <div />,
@@ -35,7 +35,7 @@ function Seat({ seat, onSeatClick, isSuggested }: { seat: SeatType, onSeatClick:
       onClick={() => onSeatClick(seat)}
       disabled={seat.status !== 'Available'}
       className={cn(
-        'aspect-square rounded-md p-1 transition-all duration-200 relative',
+        'aspect-square rounded-md p-0.5 transition-all duration-200 relative flex items-center justify-center',
         seatStatusClasses[seat.status],
         isSuggested && 'ring-2 ring-offset-2 ring-accent'
       )}
